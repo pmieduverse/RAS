@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>RAS Pre 2026 • Study Tracker</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--text:#1a202c;--muted:#718096;--primary:#1a365d;--accent:#c05621;--success:#276749;--sbg:#c6f6d5;--border:#e2e8f0;--shadow:0 4px 20px rgba(26,54,93,.08);--radius:16px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;padding-bottom:90px}
+.header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#1a365d,#2c5282);color:#fff;padding:16px 20px 14px;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.header h1{font-size:1.3rem;font-weight:700}
+.header .sub{font-size:.75rem;opacity:.85;margin-top:2px}
+.ring-wrap{position:relative;width:56px;height:56px}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.2);stroke-width:5}
+.ring-fg{fill:none;stroke:#68d391;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .4s}
+.ring-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700}
+.obar{height:6px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden;margin-top:4px}
+.obar-fill{height:100%;background:linear-gradient(90deg,#68d391,#48bb78);border-radius:99px;transition:width .4s;width:0%}
+.stats{display:flex;gap:14px;margin-top:8px;font-size:.72rem;opacity:.9}
+.stats span{font-weight:600}
+.nav-tabs{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:112px;z-index:90}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{flex-shrink:0;padding:7px 13px;border-radius:99px;font-size:.78rem;font-weight:600;border:none;background:var(--bg);color:var(--muted);cursor:pointer;white-space:nowrap}
+.nav-tab.active{background:var(--primary);color:#fff}
+.nav-tab .badge{display:inline-block;background:rgba(255,255,255,.25);border-radius:99px;padding:1px 5px;font-size:.68rem;margin-left:3px}
+.nav-tab:not(.active) .badge{background:var(--border);color:var(--muted)}
+.container{max-width:900px;margin:0 auto;padding:14px}
+.section{display:none}.section.active{display:block}
+.phase-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.ph{padding:13px 15px;display:flex;justify-content:space-between;align-items:center;color:#fff}
+.ph.p1{background:linear-gradient(135deg,#2b6cb0,#3182ce)}
+.ph.p2{background:linear-gradient(135deg,#6b46c1,#805ad5)}
+.ph.p3{background:linear-gradient(135deg,#c05621,#dd6b20)}
+.ph.p4{background:linear-gradient(135deg,#276749,#38a169)}
+.ph.p5{background:linear-gradient(135deg,#b7791f,#d69e2e)}
+.ph.rev{background:linear-gradient(135deg,#c53030,#e53e3e)}
+.ph.daily{background:linear-gradient(135deg,#2c5282,#4a5568)}
+.ph.flt{background:linear-gradient(135deg,#c05621,#ed8936)}
+.ph-title{font-size:.95rem;font-weight:700}
+.ph-dates{font-size:.72rem;opacity:.9;margin-top:1px}
+.ph-prog{text-align:right}
+.ph-prog .pct{font-size:1.05rem;font-weight:700}
+.ph-prog .cnt{font-size:.68rem;opacity:.85}
+.ph-body{padding:12px 14px 14px}
+.subj{margin-bottom:14px}
+.subj:last-child{margin-bottom:0}
+.subj-title{font-size:.86rem;font-weight:700;color:var(--primary);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.subj-title .ico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.8rem;background:#ebf8ff;flex-shrink:0}
+.topic{display:flex;align-items:flex-start;gap:11px;padding:9px 11px;border-radius:11px;margin-bottom:5px;background:var(--bg);cursor:pointer;user-select:none;transition:background .15s}
+.topic:active{background:#e2e8f0}
+.topic.done{background:var(--sbg)}
+.topic.done .tt{text-decoration:line-through;color:var(--muted)}
+.cb{width:21px;height:21px;border-radius:6px;border:2px solid #a0aec0;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;background:#fff;transition:all .2s}
+.topic.done .cb{background:var(--success);border-color:var(--success)}
+.cb svg{width:13px;height:13px;opacity:0}
+.topic.done .cb svg{opacity:1}
+.tt{font-size:.82rem;flex:1;line-height:1.35}
+.ts{font-size:.72rem;color:var(--muted);margin-top:2px}
+.flt-grid{display:grid;grid-template-columns:1fr;gap:9px}
+@media(min-width:600px){.flt-grid{grid-template-columns:1fr 1fr}}
+.flt-card{background:var(--card);border-radius:13px;padding:13px;border:2px solid var(--border);box-shadow:var(--shadow);cursor:pointer}
+.flt-card.done{border-color:var(--success);background:var(--sbg)}
+.flt-card .fn{font-size:.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
+.flt-card.done .fn{color:var(--success)}
+.flt-card .fd{font-size:1rem;font-weight:700;margin:3px 0 1px}
+.flt-card .fnote{font-size:.74rem;color:var(--muted)}
+.ov-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+@media(min-width:600px){.ov-grid{grid-template-columns:repeat(3,1fr)}}
+.ov{background:var(--card);border-radius:13px;padding:13px;box-shadow:var(--shadow);text-align:center}
+.ov .ol{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.ov .ovv{font-size:1.35rem;font-weight:800;color:var(--primary);margin-top:3px}
+.ov .os{font-size:.7rem;color:var(--muted);margin-top:1px}
+.note{background:#ebf8ff;border-left:4px solid #2b6cb0;border-radius:0 11px 11px 0;padding:11px 13px;font-size:.8rem;color:var(--primary);margin-bottom:14px}
+.note.warn{background:#fffaf0;border-color:#c05621;color:#c05621}
+.note.danger{background:#fff5f5;border-color:#e53e3e;color:#c53030}
+table.st{width:100%;border-collapse:collapse;font-size:.78rem}
+table.st th{background:var(--primary);color:#fff;padding:9px 7px;text-align:left;font-weight:600}
+table.st td{padding:9px 7px;border-bottom:1px solid var(--border);vertical-align:top}
+table.st tr:nth-child(even) td{background:#f7fafc}
+.ptag{display:inline-block;padding:2px 7px;border-radius:5px;font-size:.68rem;font-weight:700;color:#fff}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:7px 0 calc(7px + env(safe-area-inset-bottom));z-index:100;box-shadow:0 -4px 16px rgba(0,0,0,.05)}
+.bb{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--muted);font-size:.65rem;font-weight:600;cursor:pointer;padding:5px 10px;border-radius:9px}
+.bb.active{color:var(--primary)}
+.bb .i{font-size:1.2rem}
+.reset{display:block;width:100%;margin-top:16px;padding:11px;border:2px dashed var(--border);border-radius:11px;background:transparent;color:var(--muted);font-size:.82rem;font-weight:600;cursor:pointer}
+.reset:active{background:#fed7d7;color:#c53030}
+@media(min-width:768px){.container{padding:18px 22px}.header{padding:16px 26px 14px}.nav-tabs{padding:12px 22px;top:120px}.tt{font-size:.88rem}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-top">
+    <div>
+      <h1>RAS Pre 2026</h1>
+      <div class="sub">Date-wise Study Tracker • 14 Oct – 20 Nov</div>
+    </div>
+    <div class="ring-wrap">
+      <svg width="56" height="56" viewBox="0 0 56 56"><circle class="ring-bg" cx="28" cy="28" r="23"/><circle class="ring-fg" id="ringFg" cx="28" cy="28" r="23" stroke-dasharray="144.5" stroke-dashoffset="144.5"/></svg>
+      <div class="ring-pct" id="overallPct">0%</div>
+    </div>
+  </div>
+  <div class="obar"><div class="obar-fill" id="overallBar"></div></div>
+  <div class="stats"><div>Done: <span id="doneCount">0</span></div><div>Total: <span id="totalCount">0</span></div><div>Left: <span id="leftCount">0</span></div></div>
+</header>
+
+<nav class="nav-tabs" id="navTabs">
+  <button class="nav-tab active" data-s="overview">Overview</button>
+  <button class="nav-tab" data-s="phase1">Phase 1 <span class="badge" id="b-p1">0</span></button>
+  <button class="nav-tab" data-s="phase2">Phase 2 <span class="badge" id="b-p2">0</span></button>
+  <button class="nav-tab" data-s="phase3">Phase 3 <span class="badge" id="b-p3">0</span></button>
+  <button class="nav-tab" data-s="revision">Revision <span class="badge" id="b-rev">0</span></button>
+  <button class="nav-tab" data-s="phase4">Phase 4 <span class="badge" id="b-p4">0</span></button>
+  <button class="nav-tab" data-s="phase5">Phase 5 <span class="badge" id="b-p5">0</span></button>
+  <button class="nav-tab" data-s="daily">Daily <span class="badge" id="b-daily">0</span></button>
+  <button class="nav-tab" data-s="flt">FLT <span class="badge" id="b-flt">0</span></button>
+</nav>
+
+<main class="container">
+
+<!-- OVERVIEW -->
+<section class="section active" id="sec-overview">
+  <div class="ov-grid">
+    <div class="ov"><div class="ol">Overall</div><div class="ovv" id="ovOverall">0%</div><div class="os">Completion</div></div>
+    <div class="ov"><div class="ol">Topics Done</div><div class="ovv" id="ovDone">0</div><div class="os" id="ovTotalSub">of 0</div></div>
+    <div class="ov"><div class="ol">Days Left</div><div class="ovv" id="ovDays">—</div><div class="os">till 20 Nov</div></div>
+  </div>
+  <div class="note"><strong>Plan Summary:</strong> 5 Phases + 1 Revision day + Daily subjects + 5 Full Lecture Tests (every Thursday). Tick topics as you finish — progress saves automatically on this device.</div>
+  <div class="phase-card">
+    <div class="ph p1" style="cursor:default"><div><div class="ph-title">Phase-wise Schedule</div><div class="ph-dates">14 October – 20 November 2026</div></div></div>
+    <div class="ph-body" style="padding:0;overflow-x:auto">
+      <table class="st">
+        <thead><tr><th>Phase</th><th>Dates</th><th>Subjects</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ptag" style="background:#3182ce">Phase 1</span></td><td>14–22 Oct</td><td>Indian Polity • Rajasthan History • Geo of Rajasthan</td></tr>
+          <tr><td><span class="ptag" style="background:#805ad5">Phase 2</span></td><td>24–30 Oct</td><td>Rajasthan Art & Culture • Rajasthan Polity</td></tr>
+          <tr><td><span class="ptag" style="background:#dd6b20">Phase 3</span></td><td>31 Oct–7 Nov</td><td>Science & Technology • Indian History</td></tr>
+          <tr><td><span class="ptag" style="background:#e53e3e">Revision</span></td><td>8 November</td><td>Revise Phases 1–3 • Backlog • MCQs</td></tr>
+          <tr><td><span class="ptag" style="background:#38a169">Phase 4</span></td><td>9–17 Nov</td><td>Reasoning & Math • Geo of World & India</td></tr>
+          <tr><td><span class="ptag" style="background:#d69e2e">Phase 5</span></td><td>18–20 Nov</td><td>Indian Economy • Revise Math/Reasoning & Geo</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="phase-card">
+    <div class="ph flt" style="cursor:default"><div><div class="ph-title">Full Lecture Tests (FLT)</div><div class="ph-dates">Every Thursday • 5 Tests</div></div></div>
+    <div class="ph-body"><div class="flt-grid" id="overviewFlt"></div></div>
+  </div>
+</section>
+
+<!-- PHASE 1 -->
+<section class="section" id="sec-phase1">
+<div class="phase-card">
+  <div class="ph p1"><div><div class="ph-title">Phase 1</div><div class="ph-dates">14 – 22 October 2026</div></div><div class="ph-prog"><div class="pct" id="pct-p1">0%</div><div class="cnt" id="cnt-p1">0/0</div></div></div>
+  <div class="ph-body">
+    <div class="subj">
+      <div class="subj-title"><span class="ico">📜</span> Indian Constitution, Political System & Governance</div>
+      <div class="tlist" data-ph="p1">
+        <div class="topic" data-id="p1-pol-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Framing of the Constitution, Preamble, Citizenship</div></div>
+        <div class="topic" data-id="p1-pol-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Fundamental Rights, DPSP & Fundamental Duties</div></div>
+        <div class="topic" data-id="p1-pol-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Union Government – Executive, Legislature & Judiciary</div></div>
+        <div class="topic" data-id="p1-pol-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Union–State Relations, Emergency Provisions</div></div>
+        <div class="topic" data-id="p1-pol-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Urban and Rural Local Government</div></div>
+        <div class="topic" data-id="p1-pol-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Election Commission, UPSC, NHRC, NCW, NCPCR, NITI Aayog</div></div>
+        <div class="topic" data-id="p1-pol-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Public Policy, Citizen Charter, Social Audit & Grievance Redressal</div></div>
+        <div class="topic" data-id="p1-pol-8"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Lokpal, CVC, Central Information Commission</div></div>
+      </div>
+    </div>
+    <div class="subj">
+      <div class="subj-title"><span class="ico">🏛️</span> History of Rajasthan</div>
+      <div class="tlist" data-ph="p1">
+        <div class="topic" data-id="p1-rh-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Pre-historical sites – Palaeolithic to Chalcolithic & Bronze Age; Society & Culture of ancient Rajasthan</div></div>
+        <div class="topic" data-id="p1-rh-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Sources of History: Archaeological, Archival, Literary & Numismatic</div></div>
+        <div class="topic" data-id="p1-rh-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Political & Cultural achievements of major dynasties; Cooperation & Resistance with central power</div></div>
+        <div class="topic" data-id="p1-rh-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Administrative & Revenue System in Medieval Rajasthan</div></div>
+        <div class="topic" data-id="p1-rh-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Political & Social condition 18th–19th C; Peasant & Tribal movements 20th C</div></div>
+        <div class="topic" data-id="p1-rh-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Praja Mandal movements, Mass awakening & Integration of Rajasthan</div></div>
+        <div class="topic" data-id="p1-rh-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Leading Personalities of Rajasthan</div></div>
+      </div>
+    </div>
+    <div class="subj">
+      <div class="subj-title"><span class="ico">🗺️</span> Geography of Rajasthan</div>
+      <div class="tlist" data-ph="p1">
+        <div class="topic" data-id="p1-gr-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Location, Extent and Physiography</div></div>
+        <div class="topic" data-id="p1-gr-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Rivers and Lakes</div></div>
+        <div class="topic" data-id="p1-gr-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Climatic characteristics</div></div>
+        <div class="topic" data-id="p1-gr-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Natural Vegetation, Biodiversity & Conservation</div></div>
+        <div class="topic" data-id="p1-gr-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Soil, Agriculture, Livestock & Irrigation</div></div>
+        <div class="topic" data-id="p1-gr-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Population – Growth, Density, Literacy, Sex-ratio; Urbanization</div></div>
+        <div class="topic" data-id="p1-gr-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Tribes of Rajasthan</div></div>
+        <div class="topic" data-id="p1-gr-8"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Minerals – Metallic & Non-Metallic; Tourism</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- PHASE 2 -->
+<section class="section" id="sec-phase2">
+<div class="phase-card">
+  <div class="ph p2"><div><div class="ph-title">Phase 2</div><div class="ph-dates">24 – 30 October 2026</div></div><div class="ph-prog"><div class="pct" id="pct-p2">0%</div><div class="cnt" id="cnt-p2">0/0</div></div></div>
+  <div class="ph-body">
+    <div class="subj">
+      <div class="subj-title"><span class="ico">🎨</span> Art, Culture, Literature, Tradition & Heritage</div>
+      <div class="tlist" data-ph="p2">
+        <div class="topic" data-id="p2-ac-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Architectural Tradition – Temples, Forts, Palaces, Monuments, Man-made waterbodies</div></div>
+        <div class="topic" data-id="p2-ac-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Schools of Paintings and Handicrafts</div></div>
+        <div class="topic" data-id="p2-ac-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Performing Art: Folk Dances & Drama</div></div>
+        <div class="topic" data-id="p2-ac-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Music (Classical & Folk) & Musical Instruments</div></div>
+        <div class="topic" data-id="p2-ac-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Language & Literature: Dialects of Rajasthani; Literature & Folk literature</div></div>
+        <div class="topic" data-id="p2-ac-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Religious Life: Communities, Saints & Sects; Folk Deities; Practices</div></div>
+        <div class="topic" data-id="p2-ac-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Social Life: Fairs & Festivals; Customs & traditions; Attires & Ornaments</div></div>
+      </div>
+    </div>
+    <div class="subj">
+      <div class="subj-title"><span class="ico">⚖️</span> Political & Administrative System of Rajasthan</div>
+      <div class="tlist" data-ph="p2">
+        <div class="topic" data-id="p2-rp-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Governor, CM & Council of Ministers; Rajasthan Legislative Assembly</div></div>
+        <div class="topic" data-id="p2-rp-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Rajasthan High Court, Subordinate Courts; Advocate General</div></div>
+        <div class="topic" data-id="p2-rp-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Chief Secretary, Secretariat, Directorates; Div. Commissioner, DM, SP, SDO, Tehsildar</div></div>
+        <div class="topic" data-id="p2-rp-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">RPSC, State Election Commission, RIC, Women Commission, Board of Revenue, Lokayukt</div></div>
+        <div class="topic" data-id="p2-rp-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Administration of Panchayati Raj and Municipalities</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- PHASE 3 -->
+<section class="section" id="sec-phase3">
+<div class="phase-card">
+  <div class="ph p3"><div><div class="ph-title">Phase 3</div><div class="ph-dates">31 October – 7 November 2026</div></div><div class="ph-prog"><div class="pct" id="pct-p3">0%</div><div class="cnt" id="cnt-p3">0/0</div></div></div>
+  <div class="ph-body">
+    <div class="subj">
+      <div class="subj-title"><span class="ico">🔬</span> Science & Technology</div>
+      <div class="tlist" data-ph="p3">
+        <div class="topic" data-id="p3-st-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Basics of Everyday Science</div></div>
+        <div class="topic" data-id="p3-st-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Computers, Information and Communication Technology</div></div>
+        <div class="topic" data-id="p3-st-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Defence and Space Technology (special ref. to India)</div></div>
+        <div class="topic" data-id="p3-st-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Inheritance & Variation; Genetic Engineering, Biotechnology & Nanotechnology</div></div>
+        <div class="topic" data-id="p3-st-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Human Health Care; Food & Nutrition; Diseases & Public Health Programs</div></div>
+        <div class="topic" data-id="p3-st-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Environmental & Ecological Changes and Impact assessment</div></div>
+        <div class="topic" data-id="p3-st-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Biodiversity; Conservation of Natural Resources & Sustainable Development</div></div>
+        <div class="topic" data-id="p3-st-8"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Agriculture, Horticulture, Forestry & Animal Husbandry (Rajasthan focus)</div></div>
+        <div class="topic" data-id="p3-st-9"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Key Government Programs & Policies related to S&T (Rajasthan & India)</div></div>
+        <div class="topic" data-id="p3-st-10"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Recent advancements; Contribution of Indians; Indigenization of S&T</div></div>
+      </div>
+    </div>
+    <div class="subj">
+      <div class="subj-title"><span class="ico">📖</span> Indian History</div>
+      <div class="tlist" data-ph="p3">
+        <div class="topic" data-id="p3-ih-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Cultural Foundations – Indus & Vedic Age; 6th C BC religions (Ajivakas, Buddhism, Jainism)</div></div>
+        <div class="topic" data-id="p3-ih-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Major dynasties: Maurya, Kushan, Satavahana, Gupta, Chalukya, Pallava, Chola</div></div>
+        <div class="topic" data-id="p3-ih-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Art & Architecture & Scientific development in Ancient India</div></div>
+        <div class="topic" data-id="p3-ih-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Indian Knowledge System: Varna Ashram, Purushartha, Sanskara, Philosophy & Education</div></div>
+        <div class="topic" data-id="p3-ih-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Sultanate Period; Vijayanagar Empire – Political & Cultural achievements</div></div>
+        <div class="topic" data-id="p3-ih-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Mughal Period: Administration & policies; Marathas</div></div>
+        <div class="topic" data-id="p3-ih-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Art, Architecture, Literature, Paintings & Music – Medieval period</div></div>
+        <div class="topic" data-id="p3-ih-8"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Religious movements – Bhakti & Sufi contribution</div></div>
+        <div class="topic" data-id="p3-ih-9"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">British Imperialism & Resistance; Revolt of 1857; British policies</div></div>
+        <div class="topic" data-id="p3-ih-10"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Emergence of Nationalism; Socio-religious movements</div></div>
+        <div class="topic" data-id="p3-ih-11"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Freedom Struggle & INM – stages, events; Revolutionary & regional movements; Partition</div></div>
+        <div class="topic" data-id="p3-ih-12"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Post Independent Nation Building (upto 2000): Reorganisation, Nehruvian age, Planning, S&T</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- REVISION -->
+<section class="section" id="sec-revision">
+<div class="phase-card">
+  <div class="ph rev"><div><div class="ph-title">Revision Day</div><div class="ph-dates">8 November 2026</div></div><div class="ph-prog"><div class="pct" id="pct-rev">0%</div><div class="cnt" id="cnt-rev">0/0</div></div></div>
+  <div class="ph-body">
+    <div class="note danger">Dedicated day to revise Phases 1–3, clear backlog, and practice MCQs.</div>
+    <div class="tlist" data-ph="rev">
+      <div class="topic" data-id="rev-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Full revision of Phase 1 (Indian Polity + Raj History + Geo of Rajasthan)</div></div>
+      <div class="topic" data-id="rev-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Full revision of Phase 2 (Art & Culture + Rajasthan Polity)</div></div>
+      <div class="topic" data-id="rev-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Full revision of Phase 3 (Science & Tech + Indian History)</div></div>
+      <div class="topic" data-id="rev-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Clear all backlog topics from Phases 1–3</div></div>
+      <div class="topic" data-id="rev-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">MCQ Practice – Indian Polity</div></div>
+      <div class="topic" data-id="rev-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">MCQ Practice – Rajasthan History & Art-Culture</div></div>
+      <div class="topic" data-id="rev-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">MCQ Practice – Geo of Rajasthan + Science & Tech</div></div>
+      <div class="topic" data-id="rev-8"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">MCQ Practice – Indian History + Rajasthan Polity</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- PHASE 4 -->
+<section class="section" id="sec-phase4">
+<div class="phase-card">
+  <div class="ph p4"><div><div class="ph-title">Phase 4</div><div class="ph-dates">9 – 17 November 2026</div></div><div class="ph-prog"><div class="pct" id="pct-p4">0%</div><div class="cnt" id="cnt-p4">0/0</div></div></div>
+  <div class="ph-body">
+    <div class="subj">
+      <div class="subj-title"><span class="ico">🧠</span> Reasoning & Mental Ability</div>
+      <div class="tlist" data-ph="p4">
+        <div class="topic" data-id="p4-re-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Statement and Assumptions</div></div>
+        <div class="topic" data-id="p4-re-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Statement and Argument</div></div>
+        <div class="topic" data-id="p4-re-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Statements and Conclusion</div></div>
+        <div class="topic" data-id="p4-re-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Statement and Courses of Action</div></div>
+        <div class="topic" data-id="p4-re-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Analytical / Critical Reasoning</div></div>
+        <div class="topic" data-id="p4-re-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Number / Letter sequences</div></div>
+        <div class="topic" data-id="p4-re-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Coding / Decoding</div></div>
+        <div class="topic" data-id="p4-re-8"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Problems related to Relations</div></div>
+        <div class="topic" data-id="p4-re-9"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Direction sense test</div></div>
+        <div class="topic" data-id="p4-re-10"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Logical Venn diagram</div></div>
+        <div class="topic" data-id="p4-re-11"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Ranking and Sitting Arrangement</div></div>
+        <div class="topic" data-id="p4-re-12"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Shapes and their sub-sections</div></div>
+      </div>
+    </div>
+    <div class="subj">
+      <div class="subj-title"><span class="ico">🔢</span> Basic Numeracy</div>
+      <div class="tlist" data-ph="p4">
+        <div class="topic" data-id="p4-bn-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Ratio, Proportion & Partnership; Profit and Loss</div></div>
+        <div class="topic" data-id="p4-bn-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Percentage</div></div>
+        <div class="topic" data-id="p4-bn-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Simple and Compound Interest</div></div>
+        <div class="topic" data-id="p4-bn-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Perimeter and Area of Plane figures</div></div>
+        <div class="topic" data-id="p4-bn-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Data Analysis (Tables, Bar, Line, Pie-chart)</div></div>
+        <div class="topic" data-id="p4-bn-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Mean (A/G/H), Median and Mode</div></div>
+        <div class="topic" data-id="p4-bn-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Permutation and Combination</div></div>
+        <div class="topic" data-id="p4-bn-8"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Probability (Simple Problems)</div></div>
+      </div>
+    </div>
+    <div class="subj">
+      <div class="subj-title"><span class="ico">🌍</span> Geography of World and India</div>
+      <div class="tlist" data-ph="p4">
+        <div class="topic" data-id="p4-gw-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">World – Physical: Mountains, Plateaus, Plains & Deserts</div></div>
+        <div class="topic" data-id="p4-gw-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">World – Major Rivers & Lakes; Natural Vegetation</div></div>
+        <div class="topic" data-id="p4-gw-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">World – Agriculture; Industrial Regions & Industries; Transport Network</div></div>
+        <div class="topic" data-id="p4-gw-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Environmental Issues – Desertification, Deforestation, Climate Change, Ozone</div></div>
+        <div class="topic" data-id="p4-gi-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">India – Physiographic division; Climate</div></div>
+        <div class="topic" data-id="p4-gi-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">India – Major Rivers, Lakes & Irrigation</div></div>
+        <div class="topic" data-id="p4-gi-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">India – Agriculture (Important Crops); Minerals (Metallic & Non-Metallic)</div></div>
+        <div class="topic" data-id="p4-gi-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">India – Major Industrial Regions & Important industries</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- PHASE 5 -->
+<section class="section" id="sec-phase5">
+<div class="phase-card">
+  <div class="ph p5"><div><div class="ph-title">Phase 5</div><div class="ph-dates">18 – 20 November 2026</div></div><div class="ph-prog"><div class="pct" id="pct-p5">0%</div><div class="cnt" id="cnt-p5">0/0</div></div></div>
+  <div class="ph-body">
+    <div class="subj">
+      <div class="subj-title"><span class="ico">📈</span> Economic Concepts and Indian Economy</div>
+      <div class="tlist" data-ph="p5">
+        <div class="topic" data-id="p5-ie-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Economic Growth & Development; Environmental Degradation & Sustainable Development</div></div>
+        <div class="topic" data-id="p5-ie-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Measurement of Development – Conventional, HDI & Related Indices</div></div>
+        <div class="topic" data-id="p5-ie-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Monetary & Fiscal Policy; Recent Budget of GoI & Resource Mobilization</div></div>
+        <div class="topic" data-id="p5-ie-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Fiscal Federalism – Centre-State Relations & Finance Commission</div></div>
+        <div class="topic" data-id="p5-ie-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Agricultural Development – Institutional & Technological; Reforms & Initiatives</div></div>
+        <div class="topic" data-id="p5-ie-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Industrial Growth, Pattern & Policy; Industrial Reforms; LPG</div></div>
+        <div class="topic" data-id="p5-ie-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Service Sector; Energy, Transportation & Communication</div></div>
+        <div class="topic" data-id="p5-ie-8"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Skill Development & Employment; Social Justice & Empowerment</div></div>
+      </div>
+    </div>
+    <div class="subj">
+      <div class="subj-title"><span class="ico">🔁</span> Final Revision Focus</div>
+      <div class="tlist" data-ph="p5">
+        <div class="topic" data-id="p5-rv-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Revise / Practise Math & Reasoning (weak areas)</div></div>
+        <div class="topic" data-id="p5-rv-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Revise / Practise Geography (World, India & Rajasthan)</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- DAILY -->
+<section class="section" id="sec-daily">
+<div class="phase-card">
+  <div class="ph daily"><div><div class="ph-title">Daily Subjects</div><div class="ph-dates">Continue throughout the full plan</div></div><div class="ph-prog"><div class="pct" id="pct-daily">0%</div><div class="cnt" id="cnt-daily">0/0</div></div></div>
+  <div class="ph-body">
+    <div class="note">These run every day alongside phase targets. Aim ~2 hrs for Economic Survey + Current Affairs.</div>
+    <div class="subj">
+      <div class="subj-title"><span class="ico">📰</span> Economic Survey + Current Affairs</div>
+      <div class="tlist" data-ph="daily">
+        <div class="topic" data-id="d-ca-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Important personalities, places & contemporary issues (esp. Rajasthan)</div></div>
+        <div class="topic" data-id="d-ca-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Newly launched schemes, programs & initiatives (welfare & development)</div></div>
+        <div class="topic" data-id="d-ca-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Major economic and political developments</div></div>
+        <div class="topic" data-id="d-ca-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Significant events & achievements – sports & games</div></div>
+        <div class="topic" data-id="d-ca-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Major awards, publications & distinguished authors</div></div>
+        <div class="topic" data-id="d-ca-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Rajasthan Public Examination (Prevention of Unfair Means) Act, 2022</div></div>
+        <div class="topic" data-id="d-ca-7"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Daily newspaper / monthly CA magazine routine (ongoing habit)</div></div>
+      </div>
+    </div>
+    <div class="subj">
+      <div class="subj-title"><span class="ico">🌾</span> Economy of Rajasthan</div>
+      <div class="tlist" data-ph="daily">
+        <div class="topic" data-id="d-re-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Macro Overview of Economy and State Budget</div></div>
+        <div class="topic" data-id="d-re-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Agriculture, Industry & Service Sector – Status, Issues & Initiatives</div></div>
+        <div class="topic" data-id="d-re-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Infrastructure: Energy, Transportation & Communication</div></div>
+        <div class="topic" data-id="d-re-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Rural Development, Panchayati Raj & State Finance Commission</div></div>
+        <div class="topic" data-id="d-re-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Basic Social Services – Education and Health</div></div>
+        <div class="topic" data-id="d-re-6"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt">Major Welfare Schemes of Government of Rajasthan</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- FLT -->
+<section class="section" id="sec-flt">
+<div class="phase-card">
+  <div class="ph flt"><div><div class="ph-title">Full Lecture Tests (FLT)</div><div class="ph-dates">5 Tests • Every Thursday</div></div><div class="ph-prog"><div class="pct" id="pct-flt">0%</div><div class="cnt" id="cnt-flt">0/0</div></div></div>
+  <div class="ph-body">
+    <div class="note warn">Attempt full-length tests on these days. Analyse mistakes the same day or next morning.</div>
+    <div class="tlist" data-ph="flt">
+      <div class="topic" data-id="flt-1"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt"><strong>FLT – 1</strong> • 23 October (Thu)<div class="ts">Buffer / Transition day between Phase 1 & 2 + Full Lecture Test</div></div></div>
+      <div class="topic" data-id="flt-2"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt"><strong>FLT – 2</strong> • 30 October (Thu)<div class="ts">End of Phase 2 • Full Lecture Test</div></div></div>
+      <div class="topic" data-id="flt-3"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt"><strong>FLT – 3</strong> • 6 November (Thu)<div class="ts">Near end of Phase 3 • Full Lecture Test</div></div></div>
+      <div class="topic" data-id="flt-4"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt"><strong>FLT – 4</strong> • 13 November (Thu)<div class="ts">Mid Phase 4 • Full Lecture Test</div></div></div>
+      <div class="topic" data-id="flt-5"><div class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="tt"><strong>FLT – 5</strong> • 20 November (Thu)<div class="ts">Final day of plan • Full Lecture Test</div></div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<button class="reset" id="resetBtn">Reset All Progress</button>
+</main>
+
+<nav class="bottom">
+  <button class="bb active" data-s="overview"><span class="i">🏠</span>Home</button>
+  <button class="bb" data-s="phase1"><span class="i">1️⃣</span>Ph 1</button>
+  <button class="bb" data-s="phase2"><span class="i">2️⃣</span>Ph 2</button>
+  <button class="bb" data-s="phase3"><span class="i">3️⃣</span>Ph 3</button>
+  <button class="bb" data-s="phase4"><span class="i">4️⃣</span>Ph 4</button>
+  <button class="bb" data-s="flt"><span class="i">📝</span>FLT</button>
+</nav>
+
+<script>
+(function(){
+  const KEY='ras_pre_2026_progress_v2';
+  let prog={};
+  try{prog=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){prog={}}
+  function save(){localStorage.setItem(KEY,JSON.stringify(prog))}
+  function toggle(id){prog[id]=!prog[id];save();ui()}
+  function ui(){
+    const items=document.querySelectorAll('.topic[data-id]');
+    let total=0,done=0;const ps={};
+    items.forEach(el=>{
+      const id=el.dataset.id;
+      const ph=el.closest('.tlist')?.dataset.ph||'x';
+      if(!ps[ph])ps[ph]={t:0,d:0};
+      ps[ph].t++;total++;
+      if(prog[id]){el.classList.add('done');ps[ph].d++;done++}else el.classList.remove('done');
+    });
+    const pct=total?Math.round(done/total*100):0;
+    document.getElementById('overallPct').textContent=pct+'%';
+    document.getElementById('overallBar').style.width=pct+'%';
+    document.getElementById('doneCount').textContent=done;
+    document.getElementById('totalCount').textContent=total;
+    document.getElementById('leftCount').textContent=total-done;
+    document.getElementById('ovOverall').textContent=pct+'%';
+    document.getElementById('ovDone').textContent=done;
+    document.getElementById('ovTotalSub').textContent='of '+total;
+    const C=2*Math.PI*23;
+    document.getElementById('ringFg').style.strokeDashoffset=C-(pct/100)*C;
+    const end=new Date(2026,10,20),today=new Date();today.setHours(0,0,0,0);
+    document.getElementById('ovDays').textContent=Math.max(0,Math.ceil((end-today)/864e5));
+    const map={p1:['pct-p1','cnt-p1','b-p1'],p2:['pct-p2','cnt-p2','b-p2'],p3:['pct-p3','cnt-p3','b-p3'],rev:['pct-rev','cnt-rev','b-rev'],p4:['pct-p4','cnt-p4','b-p4'],p5:['pct-p5','cnt-p5','b-p5'],daily:['pct-daily','cnt-daily','b-daily'],flt:['pct-flt','cnt-flt','b-flt']};
+    Object.keys(map).forEach(ph=>{
+      const s=ps[ph]||{t:0,d:0};const p=s.t?Math.round(s.d/s.t*100):0;
+      const[a,b,c]=map[ph];
+      const A=document.getElementById(a),B=document.getElementById(b),C2=document.getElementById(c);
+      if(A)A.textContent=p+'%';if(B)B.textContent=s.d+'/'+s.t;if(C2)C2.textContent=s.d+'/'+s.t;
+    });
+    renderFlt();
+  }
+  function renderFlt(){
+    const box=document.getElementById('overviewFlt');if(!box)return;
+    const flts=[{id:'flt-1',n:'FLT-1',d:'23 Oct',note:'Buffer + Phase 1–2'},{id:'flt-2',n:'FLT-2',d:'30 Oct',note:'End of Phase 2'},{id:'flt-3',n:'FLT-3',d:'6 Nov',note:'Near end Phase 3'},{id:'flt-4',n:'FLT-4',d:'13 Nov',note:'Mid Phase 4'},{id:'flt-5',n:'FLT-5',d:'20 Nov',note:'Final day'}];
+    box.innerHTML=flts.map(f=>`<div class="flt-card ${prog[f.id]?'done':''}" data-id="${f.id}"><div class="fn">${f.n}</div><div class="fd">${f.d}</div><div class="fnote">${f.note}</div></div>`).join('');
+    box.querySelectorAll('.flt-card').forEach(c=>c.onclick=()=>toggle(c.dataset.id));
+  }
+  function go(name){
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab,.bb').forEach(t=>t.classList.remove('active'));
+    const sec=document.getElementById('sec-'+name);if(sec)sec.classList.add('active');
+    document.querySelectorAll(`[data-s="${name}"]`).forEach(t=>t.classList.add('active'));
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  document.querySelectorAll('.topic[data-id]').forEach(el=>el.onclick=()=>toggle(el.dataset.id));
+  document.querySelectorAll('.nav-tab,.bb').forEach(t=>t.onclick=()=>go(t.dataset.s));
+  document.getElementById('resetBtn').onclick=()=>{if(confirm('Reset all progress?')){prog={};save();ui()}};
+  ui();
+})();
+</script>
+</body>
+</html>
